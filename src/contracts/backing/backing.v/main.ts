@@ -26,15 +26,16 @@ export default function main({ proofOfBackingMph, protocolNftMph }: Params) {
 
       redeemer.switch {
         Unstake => {
-          pob_script_purpose: ScriptPurpose =
-            ScriptPurpose::new_minting(PROOF_OF_BACKING_MPH);
+          true
+          // pob_script_purpose: ScriptPurpose =
+          //   ScriptPurpose::new_minting(PROOF_OF_BACKING_MPH);
 
-          pob_redeemer_data: Data = tx.redeemers.get(pob_script_purpose);
+          // pob_redeemer_data: Data = tx.redeemers.get(pob_script_purpose);
 
-          PoBRedeemer::from_data(pob_redeemer_data).switch {
-            Plant => true,
-            else => false
-          }
+          // PoBRedeemer::from_data(pob_redeemer_data).switch {
+          //   Plant => true,
+          //   else => false
+          // }
         },
         Migrate => {
           pparams_datum: PParamsDatum =

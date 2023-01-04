@@ -4,7 +4,7 @@ import * as S from "@/schema";
 import {
   BackingDatum,
   ProofOfBackingMintingRedeemer,
-} from "@/schema/teiki/backer";
+} from "@/schema/teiki/backing";
 import { Hex, TimeDifference } from "@/types";
 import { assert } from "@/utils";
 

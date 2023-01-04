@@ -65,419 +65,425 @@ export default function main({
       tx: Tx = ctx.tx;
       own_mph: MintingPolicyHash = ctx.get_current_minting_policy_hash();
 
-      seed_asset_class: AssetClass = AssetClass::new(own_mph, #);
+      // seed_asset_class: AssetClass = AssetClass::new(own_mph, #);
 
       redeemer.switch {
-        plant: Plant => {
-          cleanup: Bool = plant.cleanup;
+        Plant => {
+          true
+          // cleanup: Bool = plant.cleanup;
 
-          pparams_datum: PParamsDatum =
-            find_pparams_datum_from_inputs(tx.ref_inputs, PROTOCOL_NFT_MPH);
+          // pparams_datum: PParamsDatum =
+          //   find_pparams_datum_from_inputs(tx.ref_inputs, PROTOCOL_NFT_MPH);
 
-          consumed_backing_txinputs: []TxInput =
-            tx.inputs
-              .filter(
-                (input: TxInput) -> Bool {
-                  input.output.value.get_safe(seed_asset_class) >= 1
-                }
-              );
+          // consumed_backing_txinputs: []TxInput =
+          //   tx.inputs
+          //     .filter(
+          //       (input: TxInput) -> Bool {
+          //         input.output.value.get_safe(seed_asset_class) >= 1
+          //       }
+          //     );
 
-          is_consumed_backing_empty: Bool = consumed_backing_txinputs.length == 0;
+          // is_consumed_backing_empty: Bool = consumed_backing_txinputs.length == 0;
 
-          produced_backing_txouts: []TxOutput =
-            tx.outputs.filter(
-              (output: TxOutput) -> Bool {
-                output.value.get_safe(seed_asset_class) >= 1
-              }
-            );
+          // produced_backing_txouts: []TxOutput =
+          //   tx.outputs.filter(
+          //     (output: TxOutput) -> Bool {
+          //       output.value.get_safe(seed_asset_class) >= 1
+          //     }
+          //   );
 
-          produced_backing_datums: []BackingDatum =
-            produced_backing_txouts
-            .map(
-              (txout: TxOutput) -> BackingDatum {
-                txout.datum.switch {
-                  i: Inline => BackingDatum::from_data(i.data),
-                  else => error("Invalid backing UTxO: missing inline datum")
-                }
-              }
-            );
+          // produced_backing_datums: []BackingDatum =
+          //   produced_backing_txouts
+          //   .map(
+          //     (txout: TxOutput) -> BackingDatum {
+          //       txout.datum.switch {
+          //         i: Inline => BackingDatum::from_data(i.data),
+          //         else => error("Invalid backing UTxO: missing inline datum")
+          //       }
+          //     }
+          //   );
 
-          is_produced_backing_empty: Bool = produced_backing_txouts.length == 0;
+          // is_produced_backing_empty: Bool = produced_backing_txouts.length == 0;
 
-          early_case_1: Bool =
-            if (is_consumed_backing_empty && is_produced_backing_empty) {
-              error("Must contain backing in the transaction")
-            } else {
-              true
-            };
+          // early_case_1: Bool =
+          //   if (is_consumed_backing_empty && is_produced_backing_empty) {
+          //     error("Must contain backing in the transaction")
+          //   } else {
+          //     true
+          //   };
 
-          early_case_2: Bool =
-            if (is_consumed_backing_empty && cleanup) {
-              error("Must consume backing in cleaning up")
-            } else {
-              true
-            };
+          // early_case_2: Bool =
+          //   if (is_consumed_backing_empty && cleanup) {
+          //     error("Must consume backing in cleaning up")
+          //   } else {
+          //     true
+          //   };
 
-          early_case_3: Bool =
-            if (!is_produced_backing_empty && cleanup) {
-              error("Must not produce backing in cleaning up")
-            } else {
-              true
-            };
+          // early_case_3: Bool =
+          //   if (!is_produced_backing_empty && cleanup) {
+          //     error("Must not produce backing in cleaning up")
+          //   } else {
+          //     true
+          //   };
 
-          early_case_4: Bool =
-            if(!is_consumed_backing_empty && !is_produced_backing_empty) {
-              consumed_backing_txinputs.head.output.address.credential
-                == produced_backing_txouts.head.address.credential
-            } else {
-              true
-            };
+          // early_case_4: Bool =
+          //   if(!is_consumed_backing_empty && !is_produced_backing_empty) {
+          //     consumed_backing_txinputs.head.output.address.credential
+          //       == produced_backing_txouts.head.address.credential
+          //   } else {
+          //     true
+          //   };
 
-          case_consumed_backing_not_empty: Bool =
-            if (!is_consumed_backing_empty) {
-              fisrt_consumed_backing_datum: BackingDatum =
-                consumed_backing_txinputs.head.output.datum.switch {
-                  i: Inline => BackingDatum::from_data(i.data),
-                  else => error("Invalid backing UTxO: missing inline datum")
-                };
+          // case_consumed_backing_not_empty: Bool =
+          //   if (!is_consumed_backing_empty) {
+          //     fisrt_consumed_backing_datum: BackingDatum =
+          //       consumed_backing_txinputs.head.output.datum.switch {
+          //         i: Inline => BackingDatum::from_data(i.data),
+          //         else => error("Invalid backing UTxO: missing inline datum")
+          //       };
 
-              project_id: ByteArray = fisrt_consumed_backing_datum.project_id;
-              consumed_backer_address: Address = fisrt_consumed_backing_datum.backer_address;
+          //     project_id: ByteArray = fisrt_consumed_backing_datum.project_id;
+          //     consumed_backer_address: Address = fisrt_consumed_backing_datum.backer_address;
 
-              project_txout: TxOutput =
-                tx.ref_inputs.find(
-                  (input: TxInput) -> Bool {
-                    input.output.value.get_safe(PROJECT_AT_ASSET_CLASS) == 1
-                  }
-                )
-                .output;
+          //     project_txout: TxOutput =
+          //       tx.ref_inputs.find(
+          //         (input: TxInput) -> Bool {
+          //           input.output.value.get_safe(PROJECT_AT_ASSET_CLASS) == 1
+          //         }
+          //       )
+          //       .output;
 
-              project_datum: ProjectDatum =
-                project_txout.datum.switch {
-                  i: Inline => ProjectDatum::from_data(i.data),
-                  else => error("Invalid Project utxo: missing inline datum")
-                };
+          //     project_datum: ProjectDatum =
+          //       project_txout.datum.switch {
+          //         i: Inline => ProjectDatum::from_data(i.data),
+          //         else => error("Invalid Project utxo: missing inline datum")
+          //       };
 
-              is_project_datum_valid: Bool =
-                project_datum.project_id == project_id
-                  && if (cleanup) {
-                    project_datum.status.switch {
-                      PreClosed => true,
-                      Closed => true,
-                      Delisted => true,
-                      else => error("Invalid project datum: wrong project status")
-                    }
-                  } else {
-                    true
-                  };
+          //     is_project_datum_valid: Bool =
+          //       project_datum.project_id == project_id
+          //         && if (cleanup) {
+          //           project_datum.status.switch {
+          //             PreClosed => true,
+          //             Closed => true,
+          //             Delisted => true,
+          //             else => error("Invalid project datum: wrong project status")
+          //           }
+          //         } else {
+          //           true
+          //         };
 
-              discount: Int =
-                if(cleanup) {
-                  pparams_datum.discount_cent_price * INACTIVE_BACKING_CLEANUP_DISCOUNT_CENTS
-                } else {
-                  0
-                };
+          //     discount: Int =
+          //       if(cleanup) {
+          //         pparams_datum.discount_cent_price * INACTIVE_BACKING_CLEANUP_DISCOUNT_CENTS
+          //       } else {
+          //         0
+          //       };
 
-              init_plant_accumulator: PlantAccumulator =
-                PlantAccumulator {
-                  plant_map: Map[ByteArray]Int{},
-                  total_teiki_rewards: 0
-                };
+          //     init_plant_accumulator: PlantAccumulator =
+          //       PlantAccumulator {
+          //         plant_map: Map[ByteArray]Int{},
+          //         total_teiki_rewards: 0
+          //       };
 
-              plant_accumulator: PlantAccumulator =
-                consumed_backing_txinputs
-                  .fold (
-                    (acc: PlantAccumulator, consumed_backing_txinput: TxInput) -> PlantAccumulator{
-                      backing_datum: BackingDatum =
-                        consumed_backing_txinput.output.datum.switch {
-                          i: Inline => BackingDatum::from_data(i.data),
-                          else => error("Invalid backing UTxO: missing inline datum")
-                        };
+          //     plant_accumulator: PlantAccumulator =
+          //       consumed_backing_txinputs
+          //         .fold (
+          //           (acc: PlantAccumulator, consumed_backing_txinput: TxInput) -> PlantAccumulator{
+          //             backing_datum: BackingDatum =
+          //               consumed_backing_txinput.output.datum.switch {
+          //                 i: Inline => BackingDatum::from_data(i.data),
+          //                 else => error("Invalid backing UTxO: missing inline datum")
+          //               };
 
-                      unstaked_at: Time = tx.time_range.start;
+          //             unstaked_at: Time = tx.time_range.start;
 
-                      is_consumed_backer_address_valid: Bool =
-                        if (consumed_backing_txinput.output.address.credential
-                              == Credential::new_validator(
-                                  pparams_datum.registry
-                                    .backing_validator
-                                    .latest
-                                )
-                        ){
-                          true
-                        } else {
-                          error("Invalid consumed backing address")
-                        };
+          //             is_consumed_backer_address_valid: Bool =
+          //               if (consumed_backing_txinput.output.address.credential
+          //                     == Credential::new_validator(
+          //                         pparams_datum.registry
+          //                           .backing_validator
+          //                           .latest
+          //                       )
+          //               ){
+          //                 true
+          //               } else {
+          //                 error("Invalid consumed backing address")
+          //               };
 
-                      is_backing_datum_valid: Bool =
-                        if (backing_datum.project_id == project_id) {
-                          if(cleanup) {
-                            true
-                          } else {
-                            if (backing_datum.backer_address == consumed_backer_address) {
-                              true
-                            } else {
-                              error("Invalid backing datum: wrong backer address")
-                            }
-                          }
-                        } else {
-                          error("Invalid consumed backing datum: wrong project id")
-                        };
+          //             is_backing_datum_valid: Bool =
+          //               if (backing_datum.project_id == project_id) {
+          //                 if(cleanup) {
+          //                   true
+          //                 } else {
+          //                   if (backing_datum.backer_address == consumed_backer_address) {
+          //                     true
+          //                   } else {
+          //                     error("Invalid backing datum: wrong backer address")
+          //                   }
+          //                 }
+          //               } else {
+          //                 error("Invalid consumed backing datum: wrong project id")
+          //               };
 
-                      is_unstaked_valid: Bool =
-                        if (unstaked_at >= backing_datum.staked_at) {
-                          true
-                        } else {
-                          error("Invalid unstaked time")
-                        };
+          //             is_unstaked_valid: Bool =
+          //               if (unstaked_at >= backing_datum.staked_at) {
+          //                 true
+          //               } else {
+          //                 error("Invalid unstaked time")
+          //               };
 
-                      is_rewardable: Bool =
-                        is_consumed_backer_address_valid
-                          && is_backing_datum_valid
-                          && is_unstaked_valid
-                          && unstaked_at >= backing_datum.staked_at + pparams_datum.epoch_length;
+          //             is_rewardable: Bool =
+          //               is_consumed_backer_address_valid
+          //                 && is_backing_datum_valid
+          //                 && is_unstaked_valid
+          //                 && unstaked_at >= backing_datum.staked_at + pparams_datum.epoch_length;
 
-                      if (is_rewardable) {
-                        backing_amount: Int = consumed_backing_txinput.output.value.get_safe(AssetClass::ADA);
+          //             if (is_rewardable) {
+          //               backing_amount: Int = consumed_backing_txinput.output.value.get_safe(AssetClass::ADA);
 
-                        is_matured: Bool =
-                          backing_datum.milestone_backed < project_datum.milestone_reached
-                            && project_datum.status.switch {
-                              PreDelisted => false,
-                              else => true
-                            };
+          //               is_matured: Bool =
+          //                 backing_datum.milestone_backed < project_datum.milestone_reached
+          //                   && project_datum.status.switch {
+          //                     PreDelisted => false,
+          //                     else => true
+          //                   };
 
-                        new_plant: Plant =
-                          Plant {
-                            is_matured: is_matured,
-                            backing_output_id: consumed_backing_txinput.output_id,
-                            backing_amount: backing_amount,
-                            unstaked_at: unstaked_at,
-                            project_id: backing_datum.project_id,
-                            backer_address: backing_datum.backer_address,
-                            staked_at: backing_datum.staked_at,
-                            milestone_backed: backing_datum.milestone_backed
-                          };
+          //               new_plant: Plant =
+          //                 Plant {
+          //                   is_matured: is_matured,
+          //                   backing_output_id: consumed_backing_txinput.output_id,
+          //                   backing_amount: backing_amount,
+          //                   unstaked_at: unstaked_at,
+          //                   project_id: backing_datum.project_id,
+          //                   backer_address: backing_datum.backer_address,
+          //                   staked_at: backing_datum.staked_at,
+          //                   milestone_backed: backing_datum.milestone_backed
+          //                 };
 
-                        plant_hash: ByteArray = new_plant.serialize().blake2b();
+          //               plant_hash: ByteArray = new_plant.serialize().blake2b();
 
-                        teiki_rewards: Int =
-                          if(is_matured) {
-                            backing_amount
-                              * (unstaked_at - backing_datum.staked_at) / pparams_datum.epoch_length
-                              / pparams_datum.teiki_coefficient
-                          } else {
-                            0
-                          };
+          //               teiki_rewards: Int =
+          //                 if(is_matured) {
+          //                   backing_amount
+          //                     * (unstaked_at - backing_datum.staked_at) / pparams_datum.epoch_length
+          //                     / pparams_datum.teiki_coefficient
+          //                 } else {
+          //                   0
+          //                 };
 
-                        are_output_valid: Bool =
-                          if (cleanup) {
-                            tx.outputs.any(
-                              (output: TxOutput) -> Bool {
-                                output.address == backing_datum.backer_address
-                                  && output.value.get_safe(AssetClass::ADA)
-                                      == consumed_backing_txinput.output.value.get_safe(AssetClass::ADA) - discount
-                                  && output.value.get_safe(TEIKI_ASSET_CLASS) == teiki_rewards
-                                  && output.value.get_safe(AssetClass::new(own_mph, plant_hash)) == 1
-                                  && output.datum.switch {
-                                    i: Inline =>
-                                      UserTag::from_data(i.data).switch {
-                                        tag: TagInactiveBacking =>
-                                          tag.backing_output_id == consumed_backing_txinput.output_id,
-                                          else => false
-                                      },
-                                    else => error("Invalid output UTxO, missing inline datum")
-                                  }
-                              }
-                            )
-                          } else {
-                            true
-                          };
+          //               are_output_valid: Bool =
+          //                 if (cleanup) {
+          //                   tx.outputs.any(
+          //                     (output: TxOutput) -> Bool {
+          //                       output.address == backing_datum.backer_address
+          //                         && output.value.get_safe(AssetClass::ADA)
+          //                             == consumed_backing_txinput.output.value.get_safe(AssetClass::ADA) - discount
+          //                         && output.value.get_safe(TEIKI_ASSET_CLASS) == teiki_rewards
+          //                         && output.value.get_safe(AssetClass::new(own_mph, plant_hash)) == 1
+          //                         && output.datum.switch {
+          //                           i: Inline =>
+          //                             UserTag::from_data(i.data).switch {
+          //                               tag: TagInactiveBacking =>
+          //                                 tag.backing_output_id == consumed_backing_txinput.output_id,
+          //                                 else => false
+          //                             },
+          //                           else => error("Invalid output UTxO, missing inline datum")
+          //                         }
+          //                     }
+          //                   )
+          //                 } else {
+          //                   true
+          //                 };
 
-                        if(are_output_valid){
-                          PlantAccumulator {
-                            plant_map: acc.plant_map + Map[ByteArray]Int{plant_hash: 1},
-                            total_teiki_rewards: acc.total_teiki_rewards + teiki_rewards
-                          }
-                        } else {
-                          error("Invalid outputs: missing backer outputs")
-                        }
-                      } else {
-                        acc
-                      }
-                    },
-                    init_plant_accumulator
-                  );
+          //               if(are_output_valid){
+          //                 PlantAccumulator {
+          //                   plant_map: acc.plant_map + Map[ByteArray]Int{plant_hash: 1},
+          //                   total_teiki_rewards: acc.total_teiki_rewards + teiki_rewards
+          //                 }
+          //               } else {
+          //                 error("Invalid outputs: missing backer outputs")
+          //               }
+          //             } else {
+          //               acc
+          //             }
+          //           },
+          //           init_plant_accumulator
+          //         );
 
-              does_consume_treasury_correctly: Bool =
-                if (plant_accumulator.total_teiki_rewards > 0) {
-                  total_teiki_rewards: Int = plant_accumulator.total_teiki_rewards;
+          //     does_consume_treasury_correctly: Bool =
+          //       if (plant_accumulator.total_teiki_rewards > 0) {
+          //         total_teiki_rewards: Int = plant_accumulator.total_teiki_rewards;
 
-                  shared_treasury_credential: Credential =
-                    Credential::new_validator(
-                      pparams_datum.registry
-                        .shared_treasury_validator
-                        .latest
-                    );
+          //         shared_treasury_credential: Credential =
+          //           Credential::new_validator(
+          //             pparams_datum.registry
+          //               .shared_treasury_validator
+          //               .latest
+          //           );
 
-                  shared_treasury_txinput: TxInput =
-                    tx.inputs.find(
-                      (input: TxInput) -> Bool {
-                        input_credential: Credential = input.output.address.credential;
+          //         shared_treasury_txinput: TxInput =
+          //           tx.inputs.find(
+          //             (input: TxInput) -> Bool {
+          //               input_credential: Credential = input.output.address.credential;
 
-                        if (input_credential == shared_treasury_credential) {
-                            input.output.datum.switch {
-                              i: Inline =>
-                                SharedTreasuryDatum::from_data(i.data).project_id
-                                  == project_id,
-                              else => false
-                            }
-                        } else {
-                          false
-                        }
-                      }
-                    );
+          //               if (input_credential == shared_treasury_credential) {
+          //                   input.output.datum.switch {
+          //                     i: Inline =>
+          //                       SharedTreasuryDatum::from_data(i.data).project_id
+          //                         == project_id,
+          //                     else => false
+          //                   }
+          //               } else {
+          //                 false
+          //               }
+          //             }
+          //           );
 
-                  treasury_script_purpose: ScriptPurpose =
-                    ScriptPurpose::new_spending(shared_treasury_txinput.output_id);
+          //         treasury_script_purpose: ScriptPurpose =
+          //           ScriptPurpose::new_spending(shared_treasury_txinput.output_id);
 
-                  share_treasury_redeemer_data: Data =
-                    tx.redeemers.get(treasury_script_purpose);
+          //         share_treasury_redeemer_data: Data =
+          //           tx.redeemers.get(treasury_script_purpose);
 
-                  share_treasury_update_teiki_redeemer: SharedTreasuryRedeemer::UpdateTeiki =
-                    SharedTreasuryRedeemer::from_data(share_treasury_redeemer_data).switch {
-                      update_teiki: UpdateTeiki => update_teiki,
-                      else => error("Invalid share treasury redeemer")
-                    };
+          //         share_treasury_update_teiki_redeemer: SharedTreasuryRedeemer::UpdateTeiki =
+          //           SharedTreasuryRedeemer::from_data(share_treasury_redeemer_data).switch {
+          //             update_teiki: UpdateTeiki => update_teiki,
+          //             else => error("Invalid share treasury redeemer")
+          //           };
 
-                  does_update_teiki_reward_correctly: Bool =
-                    share_treasury_update_teiki_redeemer.rewards == total_teiki_rewards;
+          //         does_update_teiki_reward_correctly: Bool =
+          //           share_treasury_update_teiki_redeemer.rewards == total_teiki_rewards;
 
-                  teiki_mint: Int =
-                    project_datum.status.switch {
-                      Delisted => share_treasury_update_teiki_redeemer.burn_action.switch {
-                        BurnEntirely => 2 * total_teiki_rewards - share_treasury_update_teiki_redeemer.burn_amount,
-                        else => error("Invalid burn action")
-                      },
-                      else => {
-                        share_treasury_update_teiki_redeemer.burn_action.switch {
-                          BurnPeriodically => 3 * total_teiki_rewards - share_treasury_update_teiki_redeemer.burn_amount,
-                          else => error("Invalid burn action")
-                        }
-                      }
-                    };
+          //         teiki_mint: Int =
+          //           project_datum.status.switch {
+          //             Delisted => share_treasury_update_teiki_redeemer.burn_action.switch {
+          //               BurnEntirely => 2 * total_teiki_rewards - share_treasury_update_teiki_redeemer.burn_amount,
+          //               else => error("Invalid burn action")
+          //             },
+          //             else => {
+          //               share_treasury_update_teiki_redeemer.burn_action.switch {
+          //                 BurnPeriodically => 3 * total_teiki_rewards - share_treasury_update_teiki_redeemer.burn_amount,
+          //                 else => error("Invalid burn action")
+          //               }
+          //             }
+          //           };
 
-                  teiki_minted: Int = tx.minted.get_safe(TEIKI_ASSET_CLASS);
+          //         teiki_minted: Int = tx.minted.get_safe(TEIKI_ASSET_CLASS);
 
-                  does_update_teiki_reward_correctly
-                    && ( teiki_minted == teiki_mint
-                    || teiki_minted == 0 - teiki_mint)
-                } else {
-                  tx.outputs.all(
-                    (output: TxOutput) -> Bool {
-                      output.value.get_safe(TEIKI_ASSET_CLASS) == 0
-                    }
-                  )
-                    && tx.minted.get_safe(TEIKI_ASSET_CLASS) == 0
-                };
+          //         does_update_teiki_reward_correctly
+          //           && ( teiki_minted == teiki_mint
+          //           || teiki_minted == 0 - teiki_mint)
+          //       } else {
+          //         tx.outputs.all(
+          //           (output: TxOutput) -> Bool {
+          //             output.value.get_safe(TEIKI_ASSET_CLASS) == 0
+          //           }
+          //         )
+          //           && tx.minted.get_safe(TEIKI_ASSET_CLASS) == 0
+          //       };
 
-              is_project_datum_valid
-                && does_consume_treasury_correctly
-                && is_tx_authorized_by(tx, consumed_backer_address.credential)
-                && tx.minted
-                    == Value::new(
-                        seed_asset_class,
-                        produced_backing_txouts.length - consumed_backing_txinputs.length
-                      )
-                      + Value::from_map(
-                        Map[MintingPolicyHash]Map[ByteArray]Int{
-                          own_mph: plant_accumulator.plant_map
-                        }
-                      )
-            } else {
-              true
-            };
+          //     is_project_datum_valid
+          //       && does_consume_treasury_correctly
+          //       && is_tx_authorized_by(tx, consumed_backer_address.credential)
+          //       && tx.minted
+          //           == Value::new(
+          //               seed_asset_class,
+          //               produced_backing_txouts.length - consumed_backing_txinputs.length
+          //             )
+          //             + Value::from_map(
+          //               Map[MintingPolicyHash]Map[ByteArray]Int{
+          //                 own_mph: plant_accumulator.plant_map
+          //               }
+          //             )
+          //   } else {
+          //     true
+          //   };
 
-          case_produced_backing_not_empty: Bool =
-            if(!is_produced_backing_empty) {
-              if (cleanup) {
-                error("Invalid case")
-              } else {
-                project_txout: TxOutput =
-                  tx.ref_inputs.find(
-                    (input: TxInput) -> Bool {
-                      input.output.value.get_safe(PROJECT_AT_ASSET_CLASS) == 1
-                    }
-                  )
-                  .output;
+          // case_produced_backing_not_empty: Bool =
+          //   if(!is_produced_backing_empty) {
+          //     if (cleanup) {
+          //       error("Invalid case")
+          //     } else {
+          //       project_txout: TxOutput =
+          //         tx.ref_inputs.find(
+          //           (input: TxInput) -> Bool {
+          //             input.output.value.get_safe(PROJECT_AT_ASSET_CLASS) == 1
+          //           }
+          //         )
+          //         .output;
 
-                project_datum: ProjectDatum =
-                  project_txout.datum.switch {
-                    i: Inline => ProjectDatum::from_data(i.data),
-                    else => error("Invalid Project utxo: missing inline datum")
-                  };
+          //       project_datum: ProjectDatum =
+          //         project_txout.datum.switch {
+          //           i: Inline => ProjectDatum::from_data(i.data),
+          //           else => error("Invalid Project utxo: missing inline datum")
+          //         };
 
-                is_project_datum_status_valid: Bool =
-                  project_datum.status.switch {
-                    Active => true,
-                    else => false
-                  };
+          //       is_project_datum_status_valid: Bool =
+          //         project_datum.status.switch {
+          //           Active => true,
+          //           else => false
+          //         };
 
-                project_id: ByteArray = produced_backing_datums.head.project_id;
-                produced_backer_address: Address = produced_backing_datums.head.backer_address;
+          //       project_id: ByteArray = produced_backing_datums.head.project_id;
+          //       produced_backer_address: Address = produced_backing_datums.head.backer_address;
 
-                project_script_txout: TxOutput =
-                  tx.ref_inputs.find(
-                    (input: TxInput) -> Bool {
-                      input.output.value.get_safe(PROJECT_SCRIPT_AT_ASSET_CLASS) == 1
-                    }
-                  )
-                  .output;
+          //       project_script_txout: TxOutput =
+          //         tx.ref_inputs.find(
+          //           (input: TxInput) -> Bool {
+          //             input.output.value.get_safe(PROJECT_SCRIPT_AT_ASSET_CLASS) == 1
+          //           }
+          //         )
+          //         .output;
 
-                project_script_datum: ProjectScriptDatum =
-                  project_script_txout.datum.switch {
-                    i: Inline => ProjectScriptDatum::from_data(i.data),
-                    else => error("Invalid Project script utxo: missing inline datum")
-                  };
+          //       project_script_datum: ProjectScriptDatum =
+          //         project_script_txout.datum.switch {
+          //           i: Inline => ProjectScriptDatum::from_data(i.data),
+          //           else => error("Invalid Project script utxo: missing inline datum")
+          //         };
 
-                ref_option_staking_credential: Option[StakingCredential] =
-                  Option[StakingCredential]::Some{
-                    scriptHashToStakingCredential(
-                      project_script_txout.ref_script_hash.unwrap()
-                    )
-                  };
+          //       ref_option_staking_credential: Option[StakingCredential] =
+          //         Option[StakingCredential]::Some{
+          //           scriptHashToStakingCredential(
+          //             project_script_txout.ref_script_hash.unwrap()
+          //           )
+          //         };
 
-                produced_backing_datums.all(
-                  (produced_backing_datum: BackingDatum) -> Bool {
-                    produced_backing_datum.backer_address == produced_backer_address
-                      && produced_backing_datum.staked_at == tx.time_range.end
-                      && produced_backing_datum.milestone_backed == project_datum.milestone_reached
-                  }
-                )
-                  && is_tx_authorized_by(tx, produced_backer_address.credential)
-                  && is_project_datum_status_valid
-                  && project_datum.project_id == project_id
-                  && project_script_datum.project_id == project_id
-                  && produced_backing_txouts.all(
-                    (output: TxOutput) -> Bool {
-                      output.address == Address::new (
-                        Credential::new_validator(
-                          pparams_datum.registry
-                            .backing_validator
-                            .latest
-                        ),
-                        ref_option_staking_credential
-                      )
-                    }
-                  )
-              }
-            } else {
-              true
-            };
+          //       produced_backing_datums.all(
+          //         (produced_backing_datum: BackingDatum) -> Bool {
+          //           produced_backing_datum.backer_address == produced_backer_address
+          //             && produced_backing_datum.staked_at == tx.time_range.end
+          //             && produced_backing_datum.milestone_backed == project_datum.milestone_reached
+          //         }
+          //       )
+          //         && is_tx_authorized_by(tx, produced_backer_address.credential)
+          //         && is_project_datum_status_valid
+          //         && project_datum.project_id == project_id
+          //         && project_script_datum.project_id == project_id
+          //         && produced_backing_txouts.all(
+          //           (output: TxOutput) -> Bool {
+          //             output.address == Address::new (
+          //               Credential::new_validator(
+          //                 pparams_datum.registry
+          //                   .backing_validator
+          //                   .latest
+          //               ),
+          //               ref_option_staking_credential
+          //             )
+          //           }
+          //         )
+          //     }
+          //   } else {
+          //     true
+          //   };
 
-          early_case_1 && early_case_2 && early_case_3 && early_case_4
-            && case_consumed_backing_not_empty
-            && case_produced_backing_not_empty
+          // assert(early_case_1, "error early_case_1");
+          // assert(early_case_2, "error early_case_2");
+          // assert(early_case_3, "error early_case_3");
+          // assert(early_case_4, "error early_case_4");
+
+          // early_case_1 && early_case_2 && early_case_3 && early_case_4
+          //   && case_consumed_backing_not_empty
+          //   && case_produced_backing_not_empty
 
         },
         claim_rewards: ClaimRewards => {

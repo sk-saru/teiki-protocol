@@ -1,9 +1,11 @@
+import { FRACTION_LIMIT } from "@/transactions/helpers/constants";
+
 import { helios } from "../program";
 
 export default helios`
   module fraction
 
-  const FRACTION_LIMIT: Int = 4000000000
+  const FRACTION_LIMIT: Int = ${FRACTION_LIMIT.toString()}
 
   struct Fraction {
     numerator: Int

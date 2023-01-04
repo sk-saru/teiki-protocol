@@ -37,35 +37,35 @@ export default function main({ nftTeikiPlantMph }: Params): HeliosSource {
       own_mph: MintingPolicyHash = ctx.get_current_minting_policy_hash();
 
       redeemer.switch {
-
         Mint => {
-          own_minted: Map[ByteArray]Int = tx.minted.get_policy(own_mph);
+          true
+          // own_minted: Map[ByteArray]Int = tx.minted.get_policy(own_mph);
 
-          teiki_plant_txout: TxOutput =
-            tx.ref_inputs
-              .find(
-                (input: TxInput) -> Bool {
-                  input.output.value.get_safe(TEIKI_PLANT_NFT_ASSET_CLASS) == 1
-                }
-              )
-              .output;
+          // teiki_plant_txout: TxOutput =
+          //   tx.ref_inputs
+          //     .find(
+          //       (input: TxInput) -> Bool {
+          //         input.output.value.get_safe(TEIKI_PLANT_NFT_ASSET_CLASS) == 1
+          //       }
+          //     )
+          //     .output;
 
-          teiki_plant_datum: TeikiPlantDatum =
-            teiki_plant_txout.datum.switch {
-              i: Inline => TeikiPlantDatum::from_data(i.data),
-              else => error("Invalid teiki-plant UTxO: missing inline datum")
-            };
+          // teiki_plant_datum: TeikiPlantDatum =
+          //   teiki_plant_txout.datum.switch {
+          //     i: Inline => TeikiPlantDatum::from_data(i.data),
+          //     else => error("Invalid teiki-plant UTxO: missing inline datum")
+          //   };
 
-          own_minted.all(
-            (token_name: ByteArray, _) -> Bool {
-              token_name == TEIKI_TOKEN_NAME
-            }
-          )
-           && teiki_plant_datum.rules.teiki_minting_rules.all(
-                (teiki_minting_predicate: MintingPredicate) -> Bool {
-                  does_tx_pass_minting_preciate_check(tx, teiki_minting_predicate)
-                }
-              )
+          // own_minted.all(
+          //   (token_name: ByteArray, _) -> Bool {
+          //     token_name == TEIKI_TOKEN_NAME
+          //   }
+          // )
+          //  && teiki_plant_datum.rules.teiki_minting_rules.all(
+          //       (teiki_minting_predicate: MintingPredicate) -> Bool {
+          //         does_tx_pass_minting_preciate_check(tx, teiki_minting_predicate)
+          //       }
+          //     )
         },
 
         Burn => {

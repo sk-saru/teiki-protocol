@@ -50,11 +50,12 @@ export const SharedTreasuryDatum = Struct({
 export type SharedTreasuryDatum = Static<typeof SharedTreasuryDatum>;
 
 export const SharedTreasuryRedeemer = Enum("case", {
-  UpdateTeiki: {
-    burnAction: BurnAction,
-    burnAmount: Int,
-    rewards: Int,
-  },
+  UpdateTeiki: Void,
+  // UpdateTeiki: {
+  //   burnAction: BurnAction,
+  //   burnAmount: Int,
+  //   rewards: Int,
+  // },
   Migrate: Void,
 });
 export type SharedTreasuryRedeemer = Static<typeof SharedTreasuryRedeemer>;

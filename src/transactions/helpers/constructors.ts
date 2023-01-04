@@ -22,9 +22,13 @@ export function constructTxOutputId({
   };
 }
 
+export function hashBlake2b256(cbor: Hex) {
+  return toHex(C.hash_blake2b256(fromHex(cbor)));
+}
+
 export function constructProjectIdUsingBlake2b(ref: OutRef): Hex {
   const cbor = S.toCbor(S.toData(constructTxOutputId(ref), S.TxOutputId));
-  return toHex(C.hash_blake2b256(fromHex(cbor)));
+  return hashBlake2b256(cbor);
 }
 
 export function constructAssetClass(

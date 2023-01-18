@@ -94,7 +94,7 @@ export function getProtocolRegistryScript(
 export function getMigratableScript(
   validatorHash: Hex,
   migrateTokenMph: Hex,
-  migrateTokenName: string
+  migrateTokenName: Hex
 ): MigratableScript {
   return constructMigratableScript(validatorHash, {
     [validatorHash]: {

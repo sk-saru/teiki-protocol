@@ -52,7 +52,8 @@ import { getLucid } from "../commands/utils";
 const POOL_ID = "pool1kgyazdg4n0vvdkznuud3ktm0wmwvd2gr932k6mt346d2u4l9tt2";
 
 // Staking manager address - only use payment credential
-const STAKING_MANAGER_ADDRESS = "addr1xxxxxxxxxxxxxxxxxxxxxx";
+const STAKING_MANAGER_ADDRESS =
+  "addr_test1qr96lcz9ac5ujtkwxzwgc8u276hcm5zp8u82hvgkh7spcwl6vq0xp4mj8q472g22vfpp5n3mgcxwlrm0dqd4uuch2cqqug4st7";
 
 const lucid = await getLucid();
 
@@ -247,7 +248,7 @@ async function runBootstapProtocol(lucid: Lucid, teikiPlantNftMph: Hex) {
     proofOfBackingMpScript
   );
   const backingVScript = exportScript(
-    compileBackingVScript(proofOfBackingMph, projectAtMph)
+    compileBackingVScript(proofOfBackingMph, protocolNftMph)
   );
   const dedicatedTreasuryVScript = exportScript(
     compileDedicatedTreasuryVScript(projectAtMph, protocolNftMph)

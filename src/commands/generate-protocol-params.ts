@@ -117,21 +117,14 @@ export type MigrationInfo = {
   migrateTokenName: Hex;
 };
 export type ProtocolRegistryParams = {
-  protocolNftMph: Hex;
-  teikiPlantNftMph: Hex;
+  registryScript: RegistryScript;
   migrationInfo?: MigrationInfo;
 };
 
-export function getProtocolRegistry(
-  lucid: Lucid,
-  { protocolNftMph, teikiPlantNftMph, migrationInfo }: ProtocolRegistryParams
-): Registry {
-  const registryScript: RegistryScript = getProtocolRegistryScript(
-    lucid,
-    protocolNftMph,
-    teikiPlantNftMph
-  );
-
+export function getProtocolRegistry({
+  registryScript,
+  migrationInfo,
+}: ProtocolRegistryParams): Registry {
   return {
     protocolStakingValidator: {
       script: { hash: registryScript.protocolSvHash },

@@ -41,8 +41,10 @@ import {
   compileProtocolScriptVScript,
 } from "../commands/compile-scripts";
 import {
+  RegistryScript,
   SAMPLE_PROTOCOL_NON_SCRIPT_PARAMS,
   getProtocolRegistry,
+  getProtocolRegistryScript,
 } from "../commands/generate-protocol-params";
 import { getLucid } from "../commands/utils";
 
@@ -299,9 +301,14 @@ async function runBootstapProtocol(lucid: Lucid, teikiPlantNftMph: Hex) {
     })
   );
 
-  const registry: Registry = getProtocolRegistry(lucid, {
+  const registryScript: RegistryScript = getProtocolRegistryScript(
+    lucid,
     protocolNftMph,
-    teikiPlantNftMph,
+    teikiPlantNftMph
+  );
+
+  const registry: Registry = getProtocolRegistry({
+    registryScript,
   });
 
   const params: BootstrapProtocolParams = {

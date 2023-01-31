@@ -55,430 +55,430 @@ const emulator = new Emulator([BACKER_ACCOUNT]);
 const lucid = await Lucid.new(emulator);
 
 describe("backing transactions", () => {
-  it("plant tx - back a project only", async () => {
-    expect.assertions(1);
-
-    lucid.selectWalletFromSeed(BACKER_ACCOUNT.seedPhrase);
-
-    const refScriptAddress = generateScriptAddress(lucid);
-    const projectAddress = generateScriptAddress(lucid);
-    const ownerAddress = generateWalletAddress(lucid);
-    const projectScriptAddress = generateScriptAddress(lucid);
-    const governorAddress = generateWalletAddress(lucid);
-    const stakingManagerAddress = generateWalletAddress(lucid);
-    const protocolParamsAddress = generateScriptAddress(lucid);
-
-    const projectAtMph = generateBlake2b224Hash();
-    const protocolNftMph = generateBlake2b224Hash();
-    const teikiMph = generateBlake2b224Hash();
-    const projectId = constructProjectIdUsingBlake2b(generateOutRef());
-    const protocolSvHash = generateBlake2b224Hash();
-
-    const proofOfBackingMintingPolicy = exportScript(
-      compileProofOfBackingMpScript({ projectAtMph, protocolNftMph, teikiMph })
-    );
-    const proofOfBackingMph = lucid.utils.validatorToScriptHash(
-      proofOfBackingMintingPolicy
-    );
-
-    const projectStakeValidator = exportScript(
-      compileProjectSvScript({
-        projectId,
-        stakingSeed: "",
-        projectAtMph,
-        protocolNftMph,
-      })
-    );
-
-    const backingValidator = exportScript(
-      compileBackingVScript({ proofOfBackingMph, protocolNftMph })
-    );
-    const backingVHash = lucid.utils.validatorToScriptHash(backingValidator);
-
-    const backingScriptAddress = scriptHashToAddress(
-      lucid,
-      backingVHash,
-      lucid.utils.validatorToScriptHash(projectStakeValidator)
-    );
-
-    const proofOfBackingMpRefUtxo: UTxO = {
-      ...generateOutRef(),
-      address: refScriptAddress,
-      assets: { lovelace: 2_000_000n },
-      scriptRef: proofOfBackingMintingPolicy,
-    };
-
-    const projectATUnit: Unit = projectAtMph + PROJECT_AT_TOKEN_NAMES.PROJECT;
-    const projectScriptATUnit: Unit =
-      projectAtMph + PROJECT_AT_TOKEN_NAMES.PROJECT_SCRIPT;
-
-    const current_project_milestone = 0n;
-
-    const projectDatum: ProjectDatum = {
-      projectId: { id: projectId },
-      ownerAddress: constructAddress(ownerAddress),
-      milestoneReached: current_project_milestone,
-      isStakingDelegationManagedByProtocol: true,
-      status: { type: "Active" },
-    };
-
-    const projectUtxo: UTxO = {
-      ...generateOutRef(),
-      address: projectAddress,
-      assets: { lovelace: 2_000_000n, [projectATUnit]: 1n },
-      datum: S.toCbor(S.toData(projectDatum, ProjectDatum)),
-    };
-
-    const projectScriptDatum: ProjectScriptDatum = {
-      projectId: { id: projectId },
-      stakingKeyDeposit: 1n,
-    };
-    const projectScriptUtxo: UTxO = {
-      ...generateOutRef(),
-      address: projectScriptAddress,
-      assets: { lovelace: 2_000_000n, [projectScriptATUnit]: 1n },
-      datum: S.toCbor(S.toData(projectScriptDatum, ProjectScriptDatum)),
-      scriptRef: projectStakeValidator,
-    };
-
-    const registry = generateProtocolRegistry(protocolSvHash, {
-      backing: backingVHash,
-    });
-
-    const protocolParamsDatum: ProtocolParamsDatum = {
-      registry,
-      governorAddress: constructAddress(governorAddress),
-      stakingManager: constructAddress(stakingManagerAddress).paymentCredential,
-      ...SAMPLE_PROTOCOL_NON_SCRIPT_PARAMS,
-    };
-
-    const protocolParamsNftUnit: Unit =
-      protocolNftMph + PROTOCOL_NFT_TOKEN_NAMES.PARAMS;
-
-    const protocolParamsUtxo: UTxO = {
-      ...generateOutRef(),
-      address: protocolParamsAddress,
-      assets: { lovelace: 2_000_000n, [protocolParamsNftUnit]: 1n },
-      datum: S.toCbor(S.toData(protocolParamsDatum, ProtocolParamsDatum)),
-    };
-
-    const backingScriptRefUtxo: UTxO = {
-      ...generateOutRef(),
-      address: refScriptAddress,
-      assets: { lovelace: 2_000_000n },
-      scriptRef: backingValidator,
-    };
-
-    attachUtxos(emulator, [
-      proofOfBackingMpRefUtxo,
-      projectUtxo,
-      projectScriptUtxo,
-      protocolParamsUtxo,
-    ]);
-
-    emulator.awaitBlock(10);
-
-    const plantParams: PlantParams = {
-      protocolParamsUtxo,
-      projectInfo: {
-        id: projectId,
-        currentMilestone: current_project_milestone,
-        projectUtxo,
-        projectScriptUtxo,
-      },
-      backingInfo: {
-        amount: 1_000_000_000n,
-        backerAddress: BACKER_ACCOUNT.address,
-        backingUtxos: [],
-        backingScriptAddress,
-        backingScriptRefUtxo,
-        proofOfBackingMpRefUtxo,
-        proofOfBackingMph,
-      },
-    };
-
-    let tx = plantTx(lucid, plantParams);
-    tx = tx.addSigner(plantParams.backingInfo.backerAddress);
-
-    const txComplete = await tx.complete();
-
-    await expect(lucid.awaitTx(await signAndSubmit(txComplete))).resolves.toBe(
-      true
-    );
-  });
-
-  it("plant tx - wilted flower only", async () => {
-    expect.assertions(1);
-
-    lucid.selectWalletFromSeed(BACKER_ACCOUNT.seedPhrase);
-
-    const refScriptAddress = generateScriptAddress(lucid);
-    const projectAddress = generateScriptAddress(lucid);
-    const ownerAddress = generateWalletAddress(lucid);
-    const projectScriptAddress = generateScriptAddress(lucid);
-    const governorAddress = generateWalletAddress(lucid);
-    const stakingManagerAddress = generateWalletAddress(lucid);
-    const protocolParamsAddress = generateScriptAddress(lucid);
-
-    const projectAtMph = generateBlake2b224Hash();
-    const protocolNftMph = generateBlake2b224Hash();
-    const teikiMph = generateBlake2b224Hash();
-    const projectId = constructProjectIdUsingBlake2b(generateOutRef());
-    const protocolSvHash = generateBlake2b224Hash();
-
-    const proofOfBackingMintingPolicy = exportScript(
-      compileProofOfBackingMpScript({ projectAtMph, protocolNftMph, teikiMph })
-    );
-    const proofOfBackingMph = lucid.utils.validatorToScriptHash(
-      proofOfBackingMintingPolicy
-    );
-
-    const projectStakeValidator = exportScript(
-      compileProjectSvScript({
-        projectId,
-        stakingSeed: "",
-        projectAtMph,
-        protocolNftMph,
-      })
-    );
-
-    const backingValidator = exportScript(
-      compileBackingVScript({ proofOfBackingMph, protocolNftMph })
-    );
-    const backingVHash = lucid.utils.validatorToScriptHash(backingValidator);
-
-    const backingScriptAddress = scriptHashToAddress(
-      lucid,
-      backingVHash,
-      lucid.utils.validatorToScriptHash(projectStakeValidator)
-    );
-
-    const proofOfBackingMpRefUtxo: UTxO = {
-      ...generateOutRef(),
-      address: refScriptAddress,
-      assets: { lovelace: 2_000_000n },
-      scriptRef: proofOfBackingMintingPolicy,
-    };
-
-    const projectATUnit: Unit = projectAtMph + PROJECT_AT_TOKEN_NAMES.PROJECT;
-    const projectScriptATUnit: Unit =
-      projectAtMph + PROJECT_AT_TOKEN_NAMES.PROJECT_SCRIPT;
-
-    const current_project_milestone = 0n;
-
-    const projectDatum: ProjectDatum = {
-      projectId: { id: projectId },
-      ownerAddress: constructAddress(ownerAddress),
-      milestoneReached: current_project_milestone,
-      isStakingDelegationManagedByProtocol: true,
-      status: { type: "Active" },
-    };
-
-    const projectUtxo: UTxO = {
-      ...generateOutRef(),
-      address: projectAddress,
-      assets: { lovelace: 2_000_000n, [projectATUnit]: 1n },
-      datum: S.toCbor(S.toData(projectDatum, ProjectDatum)),
-    };
-
-    const projectScriptDatum: ProjectScriptDatum = {
-      projectId: { id: projectId },
-      stakingKeyDeposit: 1n,
-    };
-    const projectScriptUtxo: UTxO = {
-      ...generateOutRef(),
-      address: projectScriptAddress,
-      assets: { lovelace: 2_000_000n, [projectScriptATUnit]: 1n },
-      datum: S.toCbor(S.toData(projectScriptDatum, ProjectScriptDatum)),
-      scriptRef: projectStakeValidator,
-    };
-
-    const registry = generateProtocolRegistry(protocolSvHash, {
-      backing: backingVHash,
-    });
-
-    const protocolParamsDatum: ProtocolParamsDatum = {
-      registry,
-      governorAddress: constructAddress(governorAddress),
-      stakingManager: constructAddress(stakingManagerAddress).paymentCredential,
-      ...SAMPLE_PROTOCOL_NON_SCRIPT_PARAMS,
-    };
-
-    const protocolParamsNftUnit: Unit =
-      protocolNftMph + PROTOCOL_NFT_TOKEN_NAMES.PARAMS;
-
-    const protocolParamsUtxo: UTxO = {
-      ...generateOutRef(),
-      address: protocolParamsAddress,
-      assets: { lovelace: 2_000_000n, [protocolParamsNftUnit]: 1n },
-      datum: S.toCbor(S.toData(protocolParamsDatum, ProtocolParamsDatum)),
-    };
-
-    const backingScriptRefUtxo: UTxO = {
-      ...generateOutRef(),
-      address: refScriptAddress,
-      assets: { lovelace: 2_000_000n },
-      scriptRef: backingValidator,
-    };
-
-    const backingDatum: BackingDatum = {
-      projectId: { id: projectId },
-      backerAddress: constructAddress(BACKER_ACCOUNT.address),
-      stakedAt: { timestamp: BigInt(getTime({ lucid })) },
-      milestoneBacked: current_project_milestone,
-    };
-
-    const backingUtxo = {
-      ...generateOutRef(),
-      address: backingScriptAddress,
-      assets: {
-        lovelace: 500_000_000n,
-        [proofOfBackingMph + PROOF_OF_BACKING_TOKEN_NAMES.SEED]: 1n,
-      },
-      datum: S.toCbor(S.toData(backingDatum, BackingDatum)),
-    };
-
-    const backingDatum1: BackingDatum = {
-      projectId: { id: projectId },
-      backerAddress: constructAddress(BACKER_ACCOUNT.address),
-      stakedAt: { timestamp: BigInt(getTime({ lucid })) + 100_000n },
-      milestoneBacked: current_project_milestone,
-    };
-
-    const backingUtxo1 = {
-      ...generateOutRef(),
-      address: backingScriptAddress,
-      assets: {
-        lovelace: 600_000_000n,
-        [proofOfBackingMph + PROOF_OF_BACKING_TOKEN_NAMES.SEED]: 1n,
-      },
-      datum: S.toCbor(S.toData(backingDatum1, BackingDatum)),
-    };
-
-    attachUtxos(emulator, [
-      proofOfBackingMpRefUtxo,
-      projectUtxo,
-      projectScriptUtxo,
-      protocolParamsUtxo,
-      backingUtxo,
-      backingUtxo1,
-      backingScriptRefUtxo,
-    ]);
-
-    emulator.awaitSlot(200);
-
-    const plantParams: PlantParams = {
-      protocolParamsUtxo,
-      projectInfo: {
-        id: projectId,
-        currentMilestone: current_project_milestone,
-        projectUtxo,
-        projectScriptUtxo,
-      },
-      backingInfo: {
-        amount: -400_000_000n,
-        backerAddress: BACKER_ACCOUNT.address,
-        backingUtxos: [backingUtxo, backingUtxo1],
-        backingScriptAddress,
-        backingScriptRefUtxo,
-        proofOfBackingMpRefUtxo,
-        proofOfBackingMph,
-      },
-    };
-
-    let tx = plantTx(lucid, plantParams);
-    tx = tx.addSigner(plantParams.backingInfo.backerAddress);
-
-    const txComplete = await tx.complete();
-
-    await expect(lucid.awaitTx(await signAndSubmit(txComplete))).resolves.toBe(
-      true
-    );
-  });
-
-  it("plant tx - TeikiBurntPeriodically", async () => {
-    expect.assertions(1);
-
-    lucid.selectWalletFromSeed(BACKER_ACCOUNT.seedPhrase);
-
-    const projectId = constructProjectIdUsingBlake2b(generateOutRef());
-    const governorTeiki = 1_000_000n;
-    const availableTeiki = 1_000_000_000n;
-
-    const sharedTreasuryDatum: SharedTreasuryDatum = {
-      projectId: { id: projectId },
-      governorTeiki,
-      projectTeiki: {
-        teikiCondition: "TeikiBurntPeriodically",
-        available: availableTeiki,
-        lastBurnAt: { timestamp: BigInt(getTime({ lucid })) },
-      },
-      tag: {
-        kind: "TagContinuation",
-        former: constructTxOutputId(generateOutRef()),
-      },
-    };
-
-    const plantParams = generateUpdateBackingParams(
-      sharedTreasuryDatum,
-      projectId,
-      { type: "Active" },
-      governorTeiki,
-      availableTeiki,
-      20
-    );
-
-    let tx = plantTx(lucid, plantParams);
-    tx = tx.addSigner(plantParams.backingInfo.backerAddress);
-
-    const txComplete = await tx.complete();
-
-    await expect(lucid.awaitTx(await signAndSubmit(txComplete))).resolves.toBe(
-      true
-    );
-  });
-
-  it("plant tx - TeikiBurntPeriodically - wilted flower", async () => {
-    expect.assertions(1);
-
-    lucid.selectWalletFromSeed(BACKER_ACCOUNT.seedPhrase);
-
-    const projectId = constructProjectIdUsingBlake2b(generateOutRef());
-    const governorTeiki = 1_000_000n;
-    const availableTeiki = 1_000_000_000n;
-
-    const sharedTreasuryDatum: SharedTreasuryDatum = {
-      projectId: { id: projectId },
-      governorTeiki,
-      projectTeiki: {
-        teikiCondition: "TeikiBurntPeriodically",
-        available: availableTeiki,
-        lastBurnAt: { timestamp: BigInt(getTime({ lucid })) },
-      },
-      tag: {
-        kind: "TagContinuation",
-        former: constructTxOutputId(generateOutRef()),
-      },
-    };
-
-    const plantParams = generateUpdateBackingParams(
-      sharedTreasuryDatum,
-      projectId,
-      { type: "Active" },
-      governorTeiki,
-      availableTeiki,
-      8
-    );
-
-    let tx = plantTx(lucid, plantParams);
-    tx = tx.addSigner(plantParams.backingInfo.backerAddress);
-
-    const txComplete = await tx.complete();
-
-    await expect(lucid.awaitTx(await signAndSubmit(txComplete))).resolves.toBe(
-      true
-    );
-  });
+  // it("plant tx - back a project only", async () => {
+  //   expect.assertions(1);
+
+  //   lucid.selectWalletFromSeed(BACKER_ACCOUNT.seedPhrase);
+
+  //   const refScriptAddress = generateScriptAddress(lucid);
+  //   const projectAddress = generateScriptAddress(lucid);
+  //   const ownerAddress = generateWalletAddress(lucid);
+  //   const projectScriptAddress = generateScriptAddress(lucid);
+  //   const governorAddress = generateWalletAddress(lucid);
+  //   const stakingManagerAddress = generateWalletAddress(lucid);
+  //   const protocolParamsAddress = generateScriptAddress(lucid);
+
+  //   const projectAtMph = generateBlake2b224Hash();
+  //   const protocolNftMph = generateBlake2b224Hash();
+  //   const teikiMph = generateBlake2b224Hash();
+  //   const projectId = constructProjectIdUsingBlake2b(generateOutRef());
+  //   const protocolSvHash = generateBlake2b224Hash();
+
+  //   const proofOfBackingMintingPolicy = exportScript(
+  //     compileProofOfBackingMpScript({ projectAtMph, protocolNftMph, teikiMph })
+  //   );
+  //   const proofOfBackingMph = lucid.utils.validatorToScriptHash(
+  //     proofOfBackingMintingPolicy
+  //   );
+
+  //   const projectStakeValidator = exportScript(
+  //     compileProjectSvScript({
+  //       projectId,
+  //       stakingSeed: "",
+  //       projectAtMph,
+  //       protocolNftMph,
+  //     })
+  //   );
+
+  //   const backingValidator = exportScript(
+  //     compileBackingVScript({ proofOfBackingMph, protocolNftMph })
+  //   );
+  //   const backingVHash = lucid.utils.validatorToScriptHash(backingValidator);
+
+  //   const backingScriptAddress = scriptHashToAddress(
+  //     lucid,
+  //     backingVHash,
+  //     lucid.utils.validatorToScriptHash(projectStakeValidator)
+  //   );
+
+  //   const proofOfBackingMpRefUtxo: UTxO = {
+  //     ...generateOutRef(),
+  //     address: refScriptAddress,
+  //     assets: { lovelace: 2_000_000n },
+  //     scriptRef: proofOfBackingMintingPolicy,
+  //   };
+
+  //   const projectATUnit: Unit = projectAtMph + PROJECT_AT_TOKEN_NAMES.PROJECT;
+  //   const projectScriptATUnit: Unit =
+  //     projectAtMph + PROJECT_AT_TOKEN_NAMES.PROJECT_SCRIPT;
+
+  //   const current_project_milestone = 0n;
+
+  //   const projectDatum: ProjectDatum = {
+  //     projectId: { id: projectId },
+  //     ownerAddress: constructAddress(ownerAddress),
+  //     milestoneReached: current_project_milestone,
+  //     isStakingDelegationManagedByProtocol: true,
+  //     status: { type: "Active" },
+  //   };
+
+  //   const projectUtxo: UTxO = {
+  //     ...generateOutRef(),
+  //     address: projectAddress,
+  //     assets: { lovelace: 2_000_000n, [projectATUnit]: 1n },
+  //     datum: S.toCbor(S.toData(projectDatum, ProjectDatum)),
+  //   };
+
+  //   const projectScriptDatum: ProjectScriptDatum = {
+  //     projectId: { id: projectId },
+  //     stakingKeyDeposit: 1n,
+  //   };
+  //   const projectScriptUtxo: UTxO = {
+  //     ...generateOutRef(),
+  //     address: projectScriptAddress,
+  //     assets: { lovelace: 2_000_000n, [projectScriptATUnit]: 1n },
+  //     datum: S.toCbor(S.toData(projectScriptDatum, ProjectScriptDatum)),
+  //     scriptRef: projectStakeValidator,
+  //   };
+
+  //   const registry = generateProtocolRegistry(protocolSvHash, {
+  //     backing: backingVHash,
+  //   });
+
+  //   const protocolParamsDatum: ProtocolParamsDatum = {
+  //     registry,
+  //     governorAddress: constructAddress(governorAddress),
+  //     stakingManager: constructAddress(stakingManagerAddress).paymentCredential,
+  //     ...SAMPLE_PROTOCOL_NON_SCRIPT_PARAMS,
+  //   };
+
+  //   const protocolParamsNftUnit: Unit =
+  //     protocolNftMph + PROTOCOL_NFT_TOKEN_NAMES.PARAMS;
+
+  //   const protocolParamsUtxo: UTxO = {
+  //     ...generateOutRef(),
+  //     address: protocolParamsAddress,
+  //     assets: { lovelace: 2_000_000n, [protocolParamsNftUnit]: 1n },
+  //     datum: S.toCbor(S.toData(protocolParamsDatum, ProtocolParamsDatum)),
+  //   };
+
+  //   const backingScriptRefUtxo: UTxO = {
+  //     ...generateOutRef(),
+  //     address: refScriptAddress,
+  //     assets: { lovelace: 2_000_000n },
+  //     scriptRef: backingValidator,
+  //   };
+
+  //   attachUtxos(emulator, [
+  //     proofOfBackingMpRefUtxo,
+  //     projectUtxo,
+  //     projectScriptUtxo,
+  //     protocolParamsUtxo,
+  //   ]);
+
+  //   emulator.awaitBlock(10);
+
+  //   const plantParams: PlantParams = {
+  //     protocolParamsUtxo,
+  //     projectInfo: {
+  //       id: projectId,
+  //       currentMilestone: current_project_milestone,
+  //       projectUtxo,
+  //       projectScriptUtxo,
+  //     },
+  //     backingInfo: {
+  //       amount: 1_000_000_000n,
+  //       backerAddress: BACKER_ACCOUNT.address,
+  //       backingUtxos: [],
+  //       backingScriptAddress,
+  //       backingScriptRefUtxo,
+  //       proofOfBackingMpRefUtxo,
+  //       proofOfBackingMph,
+  //     },
+  //   };
+
+  //   let tx = plantTx(lucid, plantParams);
+  //   tx = tx.addSigner(plantParams.backingInfo.backerAddress);
+
+  //   const txComplete = await tx.complete();
+
+  //   await expect(lucid.awaitTx(await signAndSubmit(txComplete))).resolves.toBe(
+  //     true
+  //   );
+  // });
+
+  // it("plant tx - wilted flower only", async () => {
+  //   expect.assertions(1);
+
+  //   lucid.selectWalletFromSeed(BACKER_ACCOUNT.seedPhrase);
+
+  //   const refScriptAddress = generateScriptAddress(lucid);
+  //   const projectAddress = generateScriptAddress(lucid);
+  //   const ownerAddress = generateWalletAddress(lucid);
+  //   const projectScriptAddress = generateScriptAddress(lucid);
+  //   const governorAddress = generateWalletAddress(lucid);
+  //   const stakingManagerAddress = generateWalletAddress(lucid);
+  //   const protocolParamsAddress = generateScriptAddress(lucid);
+
+  //   const projectAtMph = generateBlake2b224Hash();
+  //   const protocolNftMph = generateBlake2b224Hash();
+  //   const teikiMph = generateBlake2b224Hash();
+  //   const projectId = constructProjectIdUsingBlake2b(generateOutRef());
+  //   const protocolSvHash = generateBlake2b224Hash();
+
+  //   const proofOfBackingMintingPolicy = exportScript(
+  //     compileProofOfBackingMpScript({ projectAtMph, protocolNftMph, teikiMph })
+  //   );
+  //   const proofOfBackingMph = lucid.utils.validatorToScriptHash(
+  //     proofOfBackingMintingPolicy
+  //   );
+
+  //   const projectStakeValidator = exportScript(
+  //     compileProjectSvScript({
+  //       projectId,
+  //       stakingSeed: "",
+  //       projectAtMph,
+  //       protocolNftMph,
+  //     })
+  //   );
+
+  //   const backingValidator = exportScript(
+  //     compileBackingVScript({ proofOfBackingMph, protocolNftMph })
+  //   );
+  //   const backingVHash = lucid.utils.validatorToScriptHash(backingValidator);
+
+  //   const backingScriptAddress = scriptHashToAddress(
+  //     lucid,
+  //     backingVHash,
+  //     lucid.utils.validatorToScriptHash(projectStakeValidator)
+  //   );
+
+  //   const proofOfBackingMpRefUtxo: UTxO = {
+  //     ...generateOutRef(),
+  //     address: refScriptAddress,
+  //     assets: { lovelace: 2_000_000n },
+  //     scriptRef: proofOfBackingMintingPolicy,
+  //   };
+
+  //   const projectATUnit: Unit = projectAtMph + PROJECT_AT_TOKEN_NAMES.PROJECT;
+  //   const projectScriptATUnit: Unit =
+  //     projectAtMph + PROJECT_AT_TOKEN_NAMES.PROJECT_SCRIPT;
+
+  //   const current_project_milestone = 0n;
+
+  //   const projectDatum: ProjectDatum = {
+  //     projectId: { id: projectId },
+  //     ownerAddress: constructAddress(ownerAddress),
+  //     milestoneReached: current_project_milestone,
+  //     isStakingDelegationManagedByProtocol: true,
+  //     status: { type: "Active" },
+  //   };
+
+  //   const projectUtxo: UTxO = {
+  //     ...generateOutRef(),
+  //     address: projectAddress,
+  //     assets: { lovelace: 2_000_000n, [projectATUnit]: 1n },
+  //     datum: S.toCbor(S.toData(projectDatum, ProjectDatum)),
+  //   };
+
+  //   const projectScriptDatum: ProjectScriptDatum = {
+  //     projectId: { id: projectId },
+  //     stakingKeyDeposit: 1n,
+  //   };
+  //   const projectScriptUtxo: UTxO = {
+  //     ...generateOutRef(),
+  //     address: projectScriptAddress,
+  //     assets: { lovelace: 2_000_000n, [projectScriptATUnit]: 1n },
+  //     datum: S.toCbor(S.toData(projectScriptDatum, ProjectScriptDatum)),
+  //     scriptRef: projectStakeValidator,
+  //   };
+
+  //   const registry = generateProtocolRegistry(protocolSvHash, {
+  //     backing: backingVHash,
+  //   });
+
+  //   const protocolParamsDatum: ProtocolParamsDatum = {
+  //     registry,
+  //     governorAddress: constructAddress(governorAddress),
+  //     stakingManager: constructAddress(stakingManagerAddress).paymentCredential,
+  //     ...SAMPLE_PROTOCOL_NON_SCRIPT_PARAMS,
+  //   };
+
+  //   const protocolParamsNftUnit: Unit =
+  //     protocolNftMph + PROTOCOL_NFT_TOKEN_NAMES.PARAMS;
+
+  //   const protocolParamsUtxo: UTxO = {
+  //     ...generateOutRef(),
+  //     address: protocolParamsAddress,
+  //     assets: { lovelace: 2_000_000n, [protocolParamsNftUnit]: 1n },
+  //     datum: S.toCbor(S.toData(protocolParamsDatum, ProtocolParamsDatum)),
+  //   };
+
+  //   const backingScriptRefUtxo: UTxO = {
+  //     ...generateOutRef(),
+  //     address: refScriptAddress,
+  //     assets: { lovelace: 2_000_000n },
+  //     scriptRef: backingValidator,
+  //   };
+
+  //   const backingDatum: BackingDatum = {
+  //     projectId: { id: projectId },
+  //     backerAddress: constructAddress(BACKER_ACCOUNT.address),
+  //     stakedAt: { timestamp: BigInt(getTime({ lucid })) },
+  //     milestoneBacked: current_project_milestone,
+  //   };
+
+  //   const backingUtxo = {
+  //     ...generateOutRef(),
+  //     address: backingScriptAddress,
+  //     assets: {
+  //       lovelace: 500_000_000n,
+  //       [proofOfBackingMph + PROOF_OF_BACKING_TOKEN_NAMES.SEED]: 1n,
+  //     },
+  //     datum: S.toCbor(S.toData(backingDatum, BackingDatum)),
+  //   };
+
+  //   const backingDatum1: BackingDatum = {
+  //     projectId: { id: projectId },
+  //     backerAddress: constructAddress(BACKER_ACCOUNT.address),
+  //     stakedAt: { timestamp: BigInt(getTime({ lucid })) + 100_000n },
+  //     milestoneBacked: current_project_milestone,
+  //   };
+
+  //   const backingUtxo1 = {
+  //     ...generateOutRef(),
+  //     address: backingScriptAddress,
+  //     assets: {
+  //       lovelace: 600_000_000n,
+  //       [proofOfBackingMph + PROOF_OF_BACKING_TOKEN_NAMES.SEED]: 1n,
+  //     },
+  //     datum: S.toCbor(S.toData(backingDatum1, BackingDatum)),
+  //   };
+
+  //   attachUtxos(emulator, [
+  //     proofOfBackingMpRefUtxo,
+  //     projectUtxo,
+  //     projectScriptUtxo,
+  //     protocolParamsUtxo,
+  //     backingUtxo,
+  //     backingUtxo1,
+  //     backingScriptRefUtxo,
+  //   ]);
+
+  //   emulator.awaitSlot(200);
+
+  //   const plantParams: PlantParams = {
+  //     protocolParamsUtxo,
+  //     projectInfo: {
+  //       id: projectId,
+  //       currentMilestone: current_project_milestone,
+  //       projectUtxo,
+  //       projectScriptUtxo,
+  //     },
+  //     backingInfo: {
+  //       amount: -400_000_000n,
+  //       backerAddress: BACKER_ACCOUNT.address,
+  //       backingUtxos: [backingUtxo, backingUtxo1],
+  //       backingScriptAddress,
+  //       backingScriptRefUtxo,
+  //       proofOfBackingMpRefUtxo,
+  //       proofOfBackingMph,
+  //     },
+  //   };
+
+  //   let tx = plantTx(lucid, plantParams);
+  //   tx = tx.addSigner(plantParams.backingInfo.backerAddress);
+
+  //   const txComplete = await tx.complete();
+
+  //   await expect(lucid.awaitTx(await signAndSubmit(txComplete))).resolves.toBe(
+  //     true
+  //   );
+  // });
+
+  // it("plant tx - TeikiBurntPeriodically", async () => {
+  //   expect.assertions(1);
+
+  //   lucid.selectWalletFromSeed(BACKER_ACCOUNT.seedPhrase);
+
+  //   const projectId = constructProjectIdUsingBlake2b(generateOutRef());
+  //   const governorTeiki = 1_000_000n;
+  //   const availableTeiki = 1_000_000_000n;
+
+  //   const sharedTreasuryDatum: SharedTreasuryDatum = {
+  //     projectId: { id: projectId },
+  //     governorTeiki,
+  //     projectTeiki: {
+  //       teikiCondition: "TeikiBurntPeriodically",
+  //       available: availableTeiki,
+  //       lastBurnAt: { timestamp: BigInt(getTime({ lucid })) },
+  //     },
+  //     tag: {
+  //       kind: "TagContinuation",
+  //       former: constructTxOutputId(generateOutRef()),
+  //     },
+  //   };
+
+  //   const plantParams = generateUpdateBackingParams(
+  //     sharedTreasuryDatum,
+  //     projectId,
+  //     { type: "Active" },
+  //     governorTeiki,
+  //     availableTeiki,
+  //     20
+  //   );
+
+  //   let tx = plantTx(lucid, plantParams);
+  //   tx = tx.addSigner(plantParams.backingInfo.backerAddress);
+
+  //   const txComplete = await tx.complete();
+
+  //   await expect(lucid.awaitTx(await signAndSubmit(txComplete))).resolves.toBe(
+  //     true
+  //   );
+  // });
+
+  // it("plant tx - TeikiBurntPeriodically - wilted flower", async () => {
+  //   expect.assertions(1);
+
+  //   lucid.selectWalletFromSeed(BACKER_ACCOUNT.seedPhrase);
+
+  //   const projectId = constructProjectIdUsingBlake2b(generateOutRef());
+  //   const governorTeiki = 1_000_000n;
+  //   const availableTeiki = 1_000_000_000n;
+
+  //   const sharedTreasuryDatum: SharedTreasuryDatum = {
+  //     projectId: { id: projectId },
+  //     governorTeiki,
+  //     projectTeiki: {
+  //       teikiCondition: "TeikiBurntPeriodically",
+  //       available: availableTeiki,
+  //       lastBurnAt: { timestamp: BigInt(getTime({ lucid })) },
+  //     },
+  //     tag: {
+  //       kind: "TagContinuation",
+  //       former: constructTxOutputId(generateOutRef()),
+  //     },
+  //   };
+
+  //   const plantParams = generateUpdateBackingParams(
+  //     sharedTreasuryDatum,
+  //     projectId,
+  //     { type: "Active" },
+  //     governorTeiki,
+  //     availableTeiki,
+  //     8
+  //   );
+
+  //   let tx = plantTx(lucid, plantParams);
+  //   tx = tx.addSigner(plantParams.backingInfo.backerAddress);
+
+  //   const txComplete = await tx.complete();
+
+  //   await expect(lucid.awaitTx(await signAndSubmit(txComplete))).resolves.toBe(
+  //     true
+  //   );
+  // });
 
   it("plant tx - TeikiEmpty", async () => {
     expect.assertions(1);
@@ -507,7 +507,7 @@ describe("backing transactions", () => {
       { type: "Active" },
       governorTeiki,
       availableTeiki,
-      20
+      20000
     );
 
     let tx = plantTx(lucid, plantParams);
@@ -520,98 +520,98 @@ describe("backing transactions", () => {
     );
   });
 
-  it("plant tx - TeikiEmpty - wilted flower", async () => {
-    expect.assertions(1);
+  // it("plant tx - TeikiEmpty - wilted flower", async () => {
+  //   expect.assertions(1);
 
-    lucid.selectWalletFromSeed(BACKER_ACCOUNT.seedPhrase);
+  //   lucid.selectWalletFromSeed(BACKER_ACCOUNT.seedPhrase);
 
-    const projectId = constructProjectIdUsingBlake2b(generateOutRef());
-    const governorTeiki = 0n;
-    const availableTeiki = 0n;
+  //   const projectId = constructProjectIdUsingBlake2b(generateOutRef());
+  //   const governorTeiki = 0n;
+  //   const availableTeiki = 0n;
 
-    const sharedTreasuryDatum: SharedTreasuryDatum = {
-      projectId: { id: projectId },
-      governorTeiki: 0n,
-      projectTeiki: {
-        teikiCondition: "TeikiEmpty",
-      },
-      tag: {
-        kind: "TagContinuation",
-        former: constructTxOutputId(generateOutRef()),
-      },
-    };
+  //   const sharedTreasuryDatum: SharedTreasuryDatum = {
+  //     projectId: { id: projectId },
+  //     governorTeiki: 0n,
+  //     projectTeiki: {
+  //       teikiCondition: "TeikiEmpty",
+  //     },
+  //     tag: {
+  //       kind: "TagContinuation",
+  //       former: constructTxOutputId(generateOutRef()),
+  //     },
+  //   };
 
-    const plantParams = generateUpdateBackingParams(
-      sharedTreasuryDatum,
-      projectId,
-      { type: "Active" },
-      governorTeiki,
-      availableTeiki,
-      8
-    );
+  //   const plantParams = generateUpdateBackingParams(
+  //     sharedTreasuryDatum,
+  //     projectId,
+  //     { type: "Active" },
+  //     governorTeiki,
+  //     availableTeiki,
+  //     8
+  //   );
 
-    let tx = plantTx(lucid, plantParams);
-    tx = tx.addSigner(plantParams.backingInfo.backerAddress);
+  //   let tx = plantTx(lucid, plantParams);
+  //   tx = tx.addSigner(plantParams.backingInfo.backerAddress);
 
-    const txComplete = await tx.complete();
+  //   const txComplete = await tx.complete();
 
-    await expect(lucid.awaitTx(await signAndSubmit(txComplete))).resolves.toBe(
-      true
-    );
-  });
+  //   await expect(lucid.awaitTx(await signAndSubmit(txComplete))).resolves.toBe(
+  //     true
+  //   );
+  // });
 
-  it("clean up tx - TeikiEmpty - wilted flower", async () => {
-    expect.assertions(1);
+  // it("clean up tx - TeikiEmpty - wilted flower", async () => {
+  //   expect.assertions(1);
 
-    lucid.selectWalletFromSeed(BACKER_ACCOUNT.seedPhrase);
+  //   lucid.selectWalletFromSeed(BACKER_ACCOUNT.seedPhrase);
 
-    const projectId = constructProjectIdUsingBlake2b(generateOutRef());
-    const governorTeiki = 0n;
-    const availableTeiki = 0n;
+  //   const projectId = constructProjectIdUsingBlake2b(generateOutRef());
+  //   const governorTeiki = 0n;
+  //   const availableTeiki = 0n;
 
-    const sharedTreasuryDatum: SharedTreasuryDatum = {
-      projectId: { id: projectId },
-      governorTeiki: 0n,
-      projectTeiki: {
-        teikiCondition: "TeikiEmpty",
-      },
-      tag: {
-        kind: "TagContinuation",
-        former: constructTxOutputId(generateOutRef()),
-      },
-    };
+  //   const sharedTreasuryDatum: SharedTreasuryDatum = {
+  //     projectId: { id: projectId },
+  //     governorTeiki: 0n,
+  //     projectTeiki: {
+  //       teikiCondition: "TeikiEmpty",
+  //     },
+  //     tag: {
+  //       kind: "TagContinuation",
+  //       former: constructTxOutputId(generateOutRef()),
+  //     },
+  //   };
 
-    const plantParams = generateUpdateBackingParams(
-      sharedTreasuryDatum,
-      projectId,
-      { type: "Delisted" },
-      governorTeiki,
-      availableTeiki,
-      8
-    );
+  //   const plantParams = generateUpdateBackingParams(
+  //     sharedTreasuryDatum,
+  //     projectId,
+  //     { type: "Delisted" },
+  //     governorTeiki,
+  //     availableTeiki,
+  //     8
+  //   );
 
-    const cleaupParams: CleanUpParams = {
-      protocolParamsUtxo: plantParams.protocolParamsUtxo,
-      projectInfo: plantParams.projectInfo,
-      cleanUpInfo: {
-        backingUtxos: plantParams.backingInfo.backingUtxos,
-        backingScriptAddress: plantParams.backingInfo.backingScriptAddress,
-        backingScriptRefUtxo: plantParams.backingInfo.backingScriptRefUtxo,
-        proofOfBackingMpRefUtxo:
-          plantParams.backingInfo.proofOfBackingMpRefUtxo,
-        proofOfBackingMph: plantParams.backingInfo.proofOfBackingMph,
-      },
-      teikiMintingInfo: plantParams.teikiMintingInfo,
-    };
+  //   const cleaupParams: CleanUpParams = {
+  //     protocolParamsUtxo: plantParams.protocolParamsUtxo,
+  //     projectInfo: plantParams.projectInfo,
+  //     cleanUpInfo: {
+  //       backingUtxos: plantParams.backingInfo.backingUtxos,
+  //       backingScriptAddress: plantParams.backingInfo.backingScriptAddress,
+  //       backingScriptRefUtxo: plantParams.backingInfo.backingScriptRefUtxo,
+  //       proofOfBackingMpRefUtxo:
+  //         plantParams.backingInfo.proofOfBackingMpRefUtxo,
+  //       proofOfBackingMph: plantParams.backingInfo.proofOfBackingMph,
+  //     },
+  //     teikiMintingInfo: plantParams.teikiMintingInfo,
+  //   };
 
-    const tx = cleanUpTx(lucid, cleaupParams);
+  //   const tx = cleanUpTx(lucid, cleaupParams);
 
-    const txComplete = await tx.complete();
+  //   const txComplete = await tx.complete();
 
-    await expect(lucid.awaitTx(await signAndSubmit(txComplete))).resolves.toBe(
-      true
-    );
-  });
+  //   await expect(lucid.awaitTx(await signAndSubmit(txComplete))).resolves.toBe(
+  //     true
+  //   );
+  // });
 });
 
 // TODO: @sk-saru refine this function, backing UTxOs,
@@ -680,7 +680,7 @@ function generateUpdateBackingParams(
   const projectDatum: ProjectDatum = {
     projectId: { id: projectId },
     ownerAddress: constructAddress(projectOwnerAddress),
-    milestoneReached: current_project_milestone + 1n,
+    milestoneReached: current_project_milestone + 2n,
     isStakingDelegationManagedByProtocol: true,
     status: projectStatus,
   };

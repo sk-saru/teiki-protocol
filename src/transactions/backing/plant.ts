@@ -286,6 +286,7 @@ function addMintingInstruction(
       proofOfBackingMintingRedeemer
     );
   }
+  console.log("totalTeikiRewards :>> ", totalTeikiRewards);
 
   if (totalTeikiRewards > 0) {
     assert(teikiMintingInfo, "Missing teiki minting information");
@@ -409,6 +410,8 @@ function mintTeiki(
       },
     },
   };
+
+  console.log("teikiMint :>> ", teikiMint);
 
   return tx
     .readFrom([

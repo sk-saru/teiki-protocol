@@ -42,11 +42,13 @@ export default function main({ protocolNftMph }: Params) {
 
       own_validator_hash: ValidatorHash = ctx.get_current_validator_hash();
 
-      pparams_datum: PParamsDatum =
-        find_pparams_datum_from_inputs(tx.ref_inputs, PROTOCOL_NFT_MPH);
+
 
       redeemer.switch {
         collecting: CollectDelayedStakingRewards => {
+          pparams_datum: PParamsDatum =
+            find_pparams_datum_from_inputs(tx.ref_inputs, PROTOCOL_NFT_MPH);
+
           total_withdrawals: Int =
             collecting.staking_withdrawals
               .fold(
@@ -95,24 +97,29 @@ export default function main({ protocolNftMph }: Params) {
                 == pparams_datum.registry.open_treasury_validator.latest
         },
         WithdrawAda => {
-          treasury_txinputs: []TxInput =
+          is_not_min_txinput: Bool =
             tx.inputs
+              .any (
+                (input: TxInput) -> Bool {
+                  input.output.address.credential == Credential::new_validator(own_validator_hash)
+                  && input.output_id < own_input_txinput.output_id
+                }
+              );
+
+          if (is_not_min_txinput) {
+            true
+          } else {
+            pparams_datum: PParamsDatum =
+              find_pparams_datum_from_inputs(tx.ref_inputs, PROTOCOL_NFT_MPH);
+
+            treasury_txinputs: []TxInput =
+              tx.inputs
               .filter (
                 (input: TxInput) -> Bool {
                   input.output.address.credential == Credential::new_validator(own_validator_hash)
                 }
               );
 
-          is_not_min_txinput: Bool =
-            treasury_txinputs.any(
-              (input: TxInput) -> Bool {
-                input.output_id < own_input_txinput.output_id
-              }
-            );
-
-          if (is_not_min_txinput) {
-            true
-          } else {
             in_w: Int =
               treasury_txinputs.fold(
                 (acc: Int, input: TxInput) -> Int {
@@ -182,6 +189,8 @@ export default function main({ protocolNftMph }: Params) {
           }
         },
         Migrate => {
+          pparams_datum: PParamsDatum =
+              find_pparams_datum_from_inputs(tx.ref_inputs, PROTOCOL_NFT_MPH);
           migration_asset_class: AssetClass =
             pparams_datum
               .registry

@@ -87,7 +87,7 @@ describe("open treasury transactions", () => {
 
     lucid.selectWalletFromSeed(GOVERNOR_ACCOUNT.seedPhrase);
 
-    const openTreasuryUtxos = generateOpenTreasuryUtxoList(10);
+    const openTreasuryUtxos = generateOpenTreasuryUtxoList(25);
     attachUtxos(emulator, [
       protocolParamsUtxo,
       openTreasuryVRefScriptUtxo,

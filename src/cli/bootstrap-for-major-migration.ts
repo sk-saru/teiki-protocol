@@ -1,29 +1,12 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Lucid } from "lucid-cardano";
 
-import { compile, exportScript } from "@/contracts/compile";
-import { getPaymentKeyHash, signAndSubmit } from "@/helpers/lucid";
-import { TeikiPlantDatum } from "@/schema/teiki/meta-protocol";
-import { Registry } from "@/schema/teiki/protocol";
 import {
-  BootstrapMetaProtocolTxParams,
-  bootstrapMetaProtocolTx,
-} from "@/transactions/meta-protocol/bootstrap";
-import {
-  BootstrapProtocolParams,
-  bootstrapProtocolTx,
-} from "@/transactions/protocol/bootstrap";
-import { Hex } from "@/types";
-
-import {
-  compileTeikiPlantNftScript,
-  compileTeikiPlantVScript,
-  compileTeikiMpScript,
   compileProtocolNftScript,
   compileProjectsAtMpScript,
   compileProtocolSvScript,
   compileProtocolParamsVScript,
   compileProtocolProposalVScript,
+  compileProtocolScriptVScript,
   compileProjectVScript,
   compileProjectDetailVScript,
   compileProjectScriptVScript,
@@ -32,24 +15,23 @@ import {
   compileDedicatedTreasuryVScript,
   compileSharedTreasuryVScript,
   compileOpenTreasuryVScript,
-  compileSampleMigrateTokenMpScript,
-  compileProtocolScriptVScript,
-} from "../commands/compile-scripts";
+} from "@/commands/compile-scripts";
 import {
-  SAMPLE_PROTOCOL_NON_SCRIPT_PARAMS,
   getProtocolRegistry,
-} from "../commands/generate-protocol-params";
-import { getLucid } from "../commands/utils";
-
+  SAMPLE_PROTOCOL_NON_SCRIPT_PARAMS,
+} from "@/commands/generate-protocol-params";
+import { getLucid } from "@/commands/utils";
+import { exportScript } from "@/contracts/compile";
+import { signAndSubmit } from "@/helpers/lucid";
+import { Registry } from "@/schema/teiki/protocol";
 import {
-  sleep,
-  alwaysFalse,
-  deployReferencedScript,
-  printScriptHash,
-} from "./utils";
+  BootstrapProtocolParams,
+  bootstrapProtocolTx,
+} from "@/transactions/protocol/bootstrap";
+import { Hex } from "@/types";
 
-// =======================BOOTSTRAP==========================
-// Protocol staking
+import { deployReferencedScript, printScriptHash, sleep } from "./utils";
+
 const POOL_ID = "pool1z9nsz7wyyxc5r8zf8pf774p9gry09yxtrlqlg5tsnjndv5xupu3";
 
 // Staking manager address - only use payment credential
@@ -57,30 +39,18 @@ const STAKING_MANAGER_ADDRESS =
   "addr_test1qr96lcz9ac5ujtkwxzwgc8u276hcm5zp8u82hvgkh7spcwl6vq0xp4mj8q472g22vfpp5n3mgcxwlrm0dqd4uuch2cqqug4st7";
 
 const lucid = await getLucid();
+const governorAddress = await lucid.wallet.address();
 
-const teikiPlantNftPolicy = await runBootstrapMetaProtocol(lucid);
+const teikiPlantNftMph =
+  "aedc1186040e7a026788ce6ebe6ebde07a593adaa74861d6f00855df";
 
-// wait for several minutes to ensure wallet UTxOs is updated
-// check why lucid.awaitTx() not working as expected
-await sleep(60_000);
-
-const teikiPlantNftMph = lucid.utils.validatorToScriptHash(teikiPlantNftPolicy);
+const teikiMph = "596f0025dc3204d33feda79f22bd4945d0861671c4cf051c6bf6ff86";
 
 const scripts = await runBootstapProtocol(lucid, teikiPlantNftMph);
 
 const protocolNftMph = lucid.utils.validatorToScriptHash(
   scripts.PROTOCOL_NFT_MPH
 );
-
-await sleep(60_000);
-
-// ==============DEPLOY REFERENCE ScRIPTS=====================
-const metaProtocolScripts = {
-  TEIKI_PLANT_V_SCRIPT_HASH: exportScript(
-    compileTeikiPlantVScript({ teikiPlantNftMph })
-  ),
-  TEIKI_MPH: exportScript(compileTeikiMpScript({ teikiPlantNftMph })),
-};
 
 const protocolScripts = {
   PROTOCOL_SV_SCRIPT_HASH: scripts.PROTOCOL_SV_SCRIPT_HASH,
@@ -99,18 +69,13 @@ const remainingScripts = {
   DEDICATED_TREASURY_V_SCRIPT_HASH: scripts.DEDICATED_TREASURY_V_SCRIPT_HASH,
   SHARED_TREASURY_V_SCRIPT_HASH: scripts.SHARED_TREASURY_V_SCRIPT_HASH,
   OPEN_TREASURY_V_SCRIPT_HASH: scripts.OPEN_TREASURY_V_SCRIPT_HASH,
-  SAMPLE_MIGRATE_TOKEN_MPH: scripts.SAMPLE_MIGRATE_TOKEN_MPH,
 };
 
-const alwaysFalseVScript = exportScript(compile(alwaysFalse()));
-const alwaysFalseAddress = lucid.utils.validatorToAddress(alwaysFalseVScript);
-console.log("=======================================================");
-console.log(
-  `ALWAYS_FAIL_SCRIPT_HASH=${lucid.utils.validatorToScriptHash(
-    alwaysFalseVScript
-  )}`
+const alwaysFalseAddress = lucid.utils.credentialToAddress(
+  lucid.utils.scriptHashToCredential(
+    "51936f3c98a04b6609aa9b5c832ba1182cf43a58e534fcc05db09d69"
+  )
 );
-console.log("=======================================================");
 
 const protocolScriptVAddress = lucid.utils.validatorToAddress(
   scripts.PROTOCOL_SCRIPT_V_SCRIPT_HASH,
@@ -121,15 +86,10 @@ const protocolScriptVAddress = lucid.utils.validatorToAddress(
 
 await deployReferencedScript(
   lucid,
-  Object.values({ ...metaProtocolScripts, ...protocolScripts }),
+  Object.values({ ...protocolScripts }),
   alwaysFalseAddress
 );
 await sleep(60_000);
-
-console.log("\n=============== Meta protocol scripts: ================\n");
-console.log(`TEIKI_PLANT_NFT_MPH=${teikiPlantNftMph}`);
-printScriptHash(lucid, metaProtocolScripts);
-console.log("=======================================================");
 
 console.log("\n=============== Protocol scripts: =====================\n");
 console.log(`PROTOCOL_NFT_MPH=${protocolNftMph}`);
@@ -145,75 +105,9 @@ await deployReferencedScript(
 console.log("\n=============== Remaining scripts: ====================\n");
 printScriptHash(lucid, remainingScripts);
 console.log("=======================================================");
-// ==========================================================
-
-async function runBootstrapMetaProtocol(lucid: Lucid) {
-  const governorAddress = await lucid.wallet.address();
-  const seedUtxo = (await lucid.wallet.getUtxos())[0];
-
-  const teikiPlantNftPolicy = exportScript(
-    compileTeikiPlantNftScript(seedUtxo)
-  );
-
-  const teikiPlantNftMph =
-    lucid.utils.validatorToScriptHash(teikiPlantNftPolicy);
-
-  const teikiPlantVScript = exportScript(
-    compileTeikiPlantVScript({ teikiPlantNftMph })
-  );
-
-  const teikiPlantAddress = lucid.utils.validatorToAddress(teikiPlantVScript);
-
-  const teikiPlantDatum: TeikiPlantDatum = {
-    rules: {
-      teikiMintingRules: [],
-      proposalAuthorizations: [
-        {
-          authorization: "MustBe",
-          credential: {
-            type: "PubKey",
-            key: { hash: getPaymentKeyHash(governorAddress) },
-          },
-        },
-      ],
-      proposalWaitingPeriod:
-        SAMPLE_PROTOCOL_NON_SCRIPT_PARAMS.proposalWaitingPeriod,
-    },
-    proposal: null,
-  };
-
-  const params: BootstrapMetaProtocolTxParams = {
-    seedUtxo,
-    teikiPlantDatum,
-    teikiPlantNftPolicy,
-    teikiPlantAddress,
-  };
-
-  const tx = bootstrapMetaProtocolTx(lucid, params);
-
-  const txComplete = await tx.complete();
-
-  console.log("Submit bootstrap meta protcol transaction...\n");
-  const txHash = await signAndSubmit(txComplete);
-
-  console.log("Wait for confirmations...\n");
-  const result = await lucid.awaitTx(txHash);
-
-  console.log(
-    `Bootstrap meta protcol transaction ${result} and txHash: ${txHash}\n`
-  );
-
-  return teikiPlantNftPolicy;
-}
 
 async function runBootstapProtocol(lucid: Lucid, teikiPlantNftMph: Hex) {
-  const governorAddress = await lucid.wallet.address();
   const seedUtxo = (await lucid.wallet.getUtxos())[0];
-
-  const teikiMintingPolicy = exportScript(
-    compileTeikiMpScript({ teikiPlantNftMph })
-  );
-  const teikiMph = lucid.utils.validatorToScriptHash(teikiMintingPolicy);
 
   const protocolNftScript = exportScript(
     compileProtocolNftScript({ protocolSeed: seedUtxo })
@@ -295,12 +189,6 @@ async function runBootstapProtocol(lucid: Lucid, teikiPlantNftMph: Hex) {
     protocolStakeCredential
   );
 
-  const sampleMigrateTokenPolicy = exportScript(
-    compileSampleMigrateTokenMpScript({
-      governorPkh: getPaymentKeyHash(governorAddress),
-    })
-  );
-
   const registry: Registry = getProtocolRegistry(lucid, {
     protocolNftMph,
     teikiPlantNftMph,
@@ -334,7 +222,6 @@ async function runBootstapProtocol(lucid: Lucid, teikiPlantNftMph: Hex) {
   );
 
   const scripts = {
-    TEIKI_MPH: teikiMintingPolicy,
     PROTOCOL_NFT_MPH: protocolNftScript,
     PROTOCOL_SV_SCRIPT_HASH: protocolSvScript,
     PROTOCOL_PARAMS_V_SCRIPT_HASH: protocolParamsVScript,
@@ -349,7 +236,6 @@ async function runBootstapProtocol(lucid: Lucid, teikiPlantNftMph: Hex) {
     DEDICATED_TREASURY_V_SCRIPT_HASH: dedicatedTreasuryVScript,
     SHARED_TREASURY_V_SCRIPT_HASH: sharedTreasuryVScript,
     OPEN_TREASURY_V_SCRIPT_HASH: openTreasuryVScript,
-    SAMPLE_MIGRATE_TOKEN_MPH: sampleMigrateTokenPolicy,
   };
 
   return scripts;

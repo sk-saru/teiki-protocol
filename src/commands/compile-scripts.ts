@@ -134,7 +134,7 @@ export function compileTeikiMpScript({
 export function compileProofOfBackingMpScript(
   params: ProofOfBackingMpParams
 ): UplcProgram {
-  return compile(getProofOfBackingMp(params));
+  return compile(getProofOfBackingMp(params), { simplify: true });
 }
 
 export function compileBackingVScript(params: BackingVParams): UplcProgram {

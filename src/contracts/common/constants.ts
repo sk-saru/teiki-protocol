@@ -111,7 +111,9 @@ export default helios("constants")`
 
   const PROJECT_SPONSORSHIP_RESOLUTION: Duration = Duration::new(${PROJECT_SPONSORSHIP_RESOLUTION.toString()})
 
-  const PROJECT_AT_MIGRATE_IN: Option[MintingPolicyHash] = Option[MintingPolicyHash]::None
+  const PROJECT_AT_MIGRATE_IN: Option[MintingPolicyHash] = Option[MintingPolicyHash]::Some{
+    MintingPolicyHash::new(#6ab15c93e023ac75eb14513311dde841c7c1fb8c301620387e3b9a19)
+  }
 
   // Backing
   const INACTIVE_BACKING_CLEANUP_DISCOUNT_CENTS: Int = ${INACTIVE_BACKING_CLEANUP_DISCOUNT_CENTS.toString()}

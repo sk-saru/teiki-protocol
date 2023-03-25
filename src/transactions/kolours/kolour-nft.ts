@@ -73,7 +73,10 @@ export function buildMintKolourNftTx(
       description: `The Kolour #${upperKolourHex} in the Kreataverse`,
     };
 
-    nftMetadata.set(kolour, referral ? { ...metadatum, referral } : metadatum);
+    nftMetadata.set(
+      upperKolourHex,
+      referral ? { ...metadatum, referral } : metadatum
+    );
 
     tx = tx
       .mintAssets(
@@ -87,7 +90,7 @@ export function buildMintKolourNftTx(
 
   const metadata = {
     [kolourNftMph]: Object.fromEntries(nftMetadata),
-    version: 2, // asset name in hex format
+    version: 1, // asset name in utf-8 format
   };
 
   return tx
@@ -191,7 +194,7 @@ export function verifyKolourNftMintingTx(
     };
 
     constructedNftMetadatum.set(
-      kolour,
+      kolourHex,
       referral ? { ...metadatum, referral } : metadatum
     );
   }

@@ -77,10 +77,7 @@ export function buildMintGKNftTx(
     description,
   };
 
-  nftMetadata.set(
-    tokenName,
-    referral ? { ...nftMetadatum, referral } : nftMetadatum
-  );
+  nftMetadata.set(id, referral ? { ...nftMetadatum, referral } : nftMetadatum);
 
   tx = tx
     .mintAssets(
@@ -91,7 +88,7 @@ export function buildMintGKNftTx(
 
   const metadatum = {
     [gkNftMph]: Object.fromEntries(nftMetadata),
-    version: 2, // asset name in hex format
+    version: 1, // asset name in utf-8 format
   };
 
   return tx
@@ -195,7 +192,7 @@ export function verifyGKNftMintingTx(
   };
 
   constructedNftMetadatum.set(
-    tokenName,
+    id,
     referral ? { ...metadatum, referral } : metadatum
   );
 

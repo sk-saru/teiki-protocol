@@ -139,6 +139,15 @@ export function verifyKolourNftMintingTx(
   const keyHashes = extractWitnessKeyHashes({ witnesses, txId });
   const { paymentKeyHash: userPkh, stakeKeyHash: userSkh } =
     getUserAddressKeyHashes(userAddress);
+  console.log("userPkh :>> ", userPkh);
+  console.log("keyHashes :>> ", keyHashes);
+  console.log("referral :>> ", referral);
+  console.log("userSkh :>> ", userSkh);
+  console.log(
+    "keyHashes.includes(userPkh) &&(!referral || (userSkh && keyHashes.includes(userSkh))) :>> ",
+    keyHashes.includes(userPkh) &&
+      (!referral || (userSkh && keyHashes.includes(userSkh)))
+  );
   assert(
     keyHashes.includes(userPkh) &&
       (!referral || (userSkh && keyHashes.includes(userSkh))),
